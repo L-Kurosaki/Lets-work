@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert, ScrollView, Dimensions } from 'react-native';
 import { useState } from 'react';
-import { Camera, MapPin, DollarSign, X, Plus, Clock, Zap, AlertCircle } from 'lucide-react-native';
+import { Camera, MapPin, DollarSign, X, Plus, Clock, Zap, CircleAlert as AlertCircle } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { LocationService } from '@/services/locationService';
 import { Job } from '@/types';
