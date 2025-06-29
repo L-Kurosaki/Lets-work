@@ -1,8 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MessageCircle, Clock, CircleCheck as CheckCircle2 } from 'lucide-react-native';
+import { useState, useEffect } from 'react';
+import { MessageCircle, Clock, CheckCircle2, ArrowLeft } from 'lucide-react-native';
+import { Message } from '@/types';
+import { dataService } from '@/services/dataService';
+import ChatInterface from '@/components/ChatInterface';
 
-interface Message {
+interface MessageThread {
   id: string;
   name: string;
   avatar: string;
@@ -11,52 +15,159 @@ interface Message {
   unread: boolean;
   jobTitle: string;
   status: 'active' | 'completed' | 'pending';
+  userId: string;
 }
 
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    name: 'Sarah Mokoena',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-    lastMessage: 'I can start the cleaning job tomorrow at 9 AM. Does that work for you?',
-    timestamp: '2 min ago',
-    unread: true,
-    jobTitle: 'Deep Clean 3-Bedroom House',
-    status: 'active'
-  },
-  {
-    id: '2',
-    name: 'Themba Dlamini',
-    avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
-    lastMessage: 'Garden maintenance completed. Thank you for choosing my services!',
-    timestamp: '1 hour ago',
-    unread: false,
-    jobTitle: 'Garden Maintenance & Lawn Care',
-    status: 'completed'
-  },
-  {
-    id: '3',
-    name: 'Maria Santos',
-    avatar: 'https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=400',
-    lastMessage: 'I\'ve submitted my bid for R1800. I can complete the painting in 2 days.',
-    timestamp: '3 hours ago',
-    unread: true,
-    jobTitle: 'Painting Interior Walls',
-    status: 'pending'
-  },
-  {
-    id: '4',
-    name: 'John Williams',
-    avatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400',
-    lastMessage: 'The plumbing repair was successful. Please rate my service when you have a moment.',
-    timestamp: '1 day ago',
-    unread: false,
-    jobTitle: 'Bathroom Plumbing Repair',
-    status: 'completed'
-  }
-];
-
 export default function MessagesScreen() {
+  const [messageThreads, setMessageThreads] = useState<MessageThread[]>([]);
+  const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [showChat, setShowChat] = useState(false);
+
+  const currentUserId = 'customer1'; // In a real app, this would come from auth
+
+  useEffect(() => {
+    loadMessageThreads();
+  }, []);
+
+  const loadMessageThreads = () => {
+    // Mock message threads - in a real app, this would come from the API
+    const mockThreads: MessageThread[] = [
+      {
+        id: '1',
+        name: 'Sarah Mokoena',
+        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
+        lastMessage: 'I can start the cleaning job tomorrow at 9 AM. Does that work for you?',
+        timestamp: '2 min ago',
+        unread: true,
+        jobTitle: 'Deep Clean 3-Bedroom House',
+        status: 'active',
+        userId: 'provider1'
+      },
+      {
+        id: '2',
+        name: 'Themba Dlamini',
+        avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
+        lastMessage: 'Garden maintenance completed. Thank you for choosing my services!',
+        timestamp: '1 hour ago',
+        unread: false,
+        jobTitle: 'Garden Maintenance & Lawn Care',
+        status: 'completed',
+        userId: 'provider2'
+      },
+      {
+        id: '3',
+        name: 'Maria Santos',
+        avatar: 'https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=400',
+        lastMessage: 'I\'ve submitted my bid for R1800. I can complete the painting in 2 days.',
+        timestamp: '3 hours ago',
+        unread: true,
+        jobTitle: 'Painting Interior Walls',
+        status: 'pending',
+        userId: 'provider3'
+      },
+      {
+        id: '4',
+        name: 'John Williams',
+        avatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400',
+        lastMessage: 'The plumbing repair was successful. Please rate my service when you have a moment.',
+        timestamp: '1 day ago',
+        unread: false,
+        jobTitle: 'Bathroom Plumbing Repair',
+        status: 'completed',
+        userId: 'provider4'
+      }
+    ];
+
+    setMessageThreads(mockThreads);
+  };
+
+  const loadMessages = (threadId: string) => {
+    // Mock messages for the selected thread
+    const mockMessages: Message[] = [
+      {
+        id: '1',
+        senderId: 'provider1',
+        receiverId: currentUserId,
+        content: 'Hi! I saw your cleaning job posting. I have 8+ years of experience in deep cleaning.',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        type: 'text',
+        read: true
+      },
+      {
+        id: '2',
+        senderId: currentUserId,
+        receiverId: 'provider1',
+        content: 'Great! Can you tell me more about your approach to deep cleaning?',
+        timestamp: new Date(Date.now() - 3000000).toISOString(),
+        type: 'text',
+        read: true
+      },
+      {
+        id: '3',
+        senderId: 'provider1',
+        receiverId: currentUserId,
+        content: 'I use eco-friendly products and follow a systematic approach. I can start tomorrow at 9 AM if that works for you.',
+        timestamp: new Date(Date.now() - 120000).toISOString(),
+        type: 'text',
+        read: false
+      }
+    ];
+
+    setMessages(mockMessages);
+  };
+
+  const handleThreadPress = (thread: MessageThread) => {
+    setSelectedThread(thread);
+    loadMessages(thread.id);
+    setShowChat(true);
+    
+    // Mark thread as read
+    setMessageThreads(prev => 
+      prev.map(t => 
+        t.id === thread.id ? { ...t, unread: false } : t
+      )
+    );
+  };
+
+  const handleSendMessage = async (content: string, type: 'text' | 'image') => {
+    if (!selectedThread) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      senderId: currentUserId,
+      receiverId: selectedThread.userId,
+      content,
+      timestamp: new Date().toISOString(),
+      type,
+      read: false
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+
+    // Update the thread's last message
+    setMessageThreads(prev =>
+      prev.map(thread =>
+        thread.id === selectedThread.id
+          ? { ...thread, lastMessage: content, timestamp: 'Just now' }
+          : thread
+      )
+    );
+
+    // In a real app, you would send this to your backend
+    try {
+      await dataService.sendMessage({
+        senderId: newMessage.senderId,
+        receiverId: newMessage.receiverId,
+        content: newMessage.content,
+        type: newMessage.type,
+        jobId: selectedThread.id
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
@@ -91,35 +202,35 @@ export default function MessagesScreen() {
       </View>
 
       <ScrollView style={styles.messagesList} showsVerticalScrollIndicator={false}>
-        {mockMessages.map((message) => (
-          <TouchableOpacity key={message.id} style={styles.messageCard}>
+        {messageThreads.map((thread) => (
+          <TouchableOpacity key={thread.id} style={styles.messageCard} onPress={() => handleThreadPress(thread)}>
             <View style={styles.messageHeader}>
-              <Image source={{ uri: message.avatar }} style={styles.avatar} />
+              <Image source={{ uri: thread.avatar }} style={styles.avatar} />
               <View style={styles.messageInfo}>
                 <View style={styles.nameContainer}>
-                  <Text style={styles.senderName}>{message.name}</Text>
-                  <Text style={styles.timestamp}>{message.timestamp}</Text>
+                  <Text style={styles.senderName}>{thread.name}</Text>
+                  <Text style={styles.timestamp}>{thread.timestamp}</Text>
                 </View>
                 
                 <View style={styles.jobContainer}>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(message.status) }]}>
-                    {getStatusIcon(message.status)}
-                    <Text style={styles.statusText}>{message.status}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(thread.status) }]}>
+                    {getStatusIcon(thread.status)}
+                    <Text style={styles.statusText}>{thread.status}</Text>
                   </View>
                 </View>
                 
-                <Text style={styles.jobTitle} numberOfLines={1}>{message.jobTitle}</Text>
+                <Text style={styles.jobTitle} numberOfLines={1}>{thread.jobTitle}</Text>
                 <Text style={styles.messagePreview} numberOfLines={2}>
-                  {message.lastMessage}
+                  {thread.lastMessage}
                 </Text>
               </View>
               
-              {message.unread && <View style={styles.unreadIndicator} />}
+              {thread.unread && <View style={styles.unreadIndicator} />}
             </View>
           </TouchableOpacity>
         ))}
         
-        {mockMessages.length === 0 && (
+        {messageThreads.length === 0 && (
           <View style={styles.emptyState}>
             <MessageCircle color="#D1D5DB" size={64} />
             <Text style={styles.emptyTitle}>No messages yet</Text>
@@ -129,6 +240,37 @@ export default function MessagesScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Chat Modal */}
+      <Modal
+        visible={showChat}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        {selectedThread && (
+          <View style={styles.chatContainer}>
+            <View style={styles.chatHeader}>
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={() => setShowChat(false)}
+              >
+                <ArrowLeft color="#2563EB" size={24} />
+              </TouchableOpacity>
+              <Image source={{ uri: selectedThread.avatar }} style={styles.chatAvatar} />
+              <View style={styles.chatHeaderInfo}>
+                <Text style={styles.chatHeaderName}>{selectedThread.name}</Text>
+                <Text style={styles.chatHeaderJob}>{selectedThread.jobTitle}</Text>
+              </View>
+            </View>
+            
+            <ChatInterface
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              currentUserId={currentUserId}
+            />
+          </View>
+        )}
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -262,5 +404,39 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 32,
     lineHeight: 20,
+  },
+  chatContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  chatAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  chatHeaderInfo: {
+    flex: 1,
+  },
+  chatHeaderName: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#111827',
+  },
+  chatHeaderJob: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
   },
 });

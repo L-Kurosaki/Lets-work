@@ -1,10 +1,12 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
 import { useState } from 'react';
-import { Camera, MapPin, DollarSign, Clock } from 'lucide-react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Camera, MapPin, DollarSign, X, Plus } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { LocationService } from '@/services/locationService';
+import { Job } from '@/types';
 
 interface JobPostFormProps {
-  onSubmit: (jobData: any) => void;
+  onSubmit: (jobData: Omit<Job, 'id' | 'bids' | 'timePosted' | 'status'>) => void;
   onCancel: () => void;
 }
 
@@ -14,67 +16,126 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
   const [location, setLocation] = useState('');
   const [budget, setBudget] = useState('');
   const [category, setCategory] = useState('');
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [showCamera, setShowCamera] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
+  const [images, setImages] = useState<string[]>([]);
+  const [estimatedDuration, setEstimatedDuration] = useState('');
+  const [urgency, setUrgency] = useState<'low' | 'medium' | 'high'>('medium');
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
-  const categories = ['Cleaning', 'Gardening', 'Painting', 'Handyman', 'Plumbing', 'Other'];
+  const categories = ['Cleaning', 'Gardening', 'Painting', 'Handyman', 'Plumbing', 'Electrical', 'Moving', 'Other'];
+  const urgencyLevels = [
+    { value: 'low', label: 'Low Priority', color: '#10B981' },
+    { value: 'medium', label: 'Medium Priority', color: '#F59E0B' },
+    { value: 'high', label: 'Urgent', color: '#EF4444' }
+  ];
 
   const handleTakePhoto = async () => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
         Alert.alert('Permission required', 'Camera access is needed to take photos of your job site.');
         return;
       }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setImages(prev => [...prev, result.assets[0].uri]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
     }
-    setShowCamera(true);
   };
 
-  const handleSubmit = () => {
-    if (!title || !description || !location || !budget || !category) {
+  const handlePickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'Photo library access is needed to select images.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setImages(prev => [...prev, result.assets[0].uri]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to select image. Please try again.');
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getCurrentLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      const coords = await LocationService.getCurrentLocation();
+      if (coords) {
+        // In a real app, you'd reverse geocode these coordinates to get an address
+        setLocation(`${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`);
+      } else {
+        Alert.alert('Location Error', 'Unable to get your current location. Please enter manually.');
+      }
+    } catch (error) {
+      Alert.alert('Location Error', 'Failed to get location. Please enter manually.');
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!title.trim() || !description.trim() || !location.trim() || !budget.trim() || !category || !estimatedDuration) {
       Alert.alert('Missing Information', 'Please fill in all required fields.');
       return;
     }
 
-    const jobData = {
-      title,
-      description,
-      location,
-      budget,
-      category,
-      photos,
-      timePosted: 'Just now',
-      bids: 0,
-      urgency: 'medium'
-    };
+    if (images.length === 0) {
+      Alert.alert('Photo Required', 'Please add at least one photo of the job site to help providers understand the work needed.');
+      return;
+    }
 
-    onSubmit(jobData);
+    const duration = parseInt(estimatedDuration);
+    if (isNaN(duration) || duration <= 0) {
+      Alert.alert('Invalid Duration', 'Please enter a valid estimated duration in hours.');
+      return;
+    }
+
+    try {
+      const coords = await LocationService.getCurrentLocation();
+      
+      const jobData = {
+        title: title.trim(),
+        description: description.trim(),
+        location: location.trim(),
+        coordinates: coords,
+        budget: budget.trim(),
+        category,
+        images,
+        urgency,
+        customerId: 'customer1', // In a real app, this would come from auth
+        estimatedDuration: duration
+      };
+
+      onSubmit(jobData);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create job. Please try again.');
+    }
   };
 
-  if (showCamera) {
-    return (
-      <View style={styles.cameraContainer}>
-        <CameraView style={styles.camera}>
-          <View style={styles.cameraControls}>
-            <TouchableOpacity 
-              style={styles.cancelCameraButton}
-              onPress={() => setShowCamera(false)}
-            >
-              <Text style={styles.cancelCameraText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.captureButton}>
-              <View style={styles.captureButtonInner} />
-            </TouchableOpacity>
-            <View style={styles.placeholder} />
-          </View>
-        </CameraView>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Post a Job</Text>
         <Text style={styles.headerSubtitle}>Describe your job and get bids from trusted providers</Text>
@@ -131,15 +192,26 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Location *</Text>
-          <View style={styles.inputWithIcon}>
-            <MapPin color="#6B7280" size={20} />
-            <TextInput
-              style={styles.inputWithIconText}
-              value={location}
-              onChangeText={setLocation}
-              placeholder="e.g. Sandton, Johannesburg"
-              placeholderTextColor="#9CA3AF"
-            />
+          <View style={styles.locationContainer}>
+            <View style={styles.inputWithIcon}>
+              <MapPin color="#6B7280" size={20} />
+              <TextInput
+                style={styles.inputWithIconText}
+                value={location}
+                onChangeText={setLocation}
+                placeholder="e.g. Sandton, Johannesburg"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+            <TouchableOpacity 
+              style={styles.locationButton} 
+              onPress={getCurrentLocation}
+              disabled={isLoadingLocation}
+            >
+              <Text style={styles.locationButtonText}>
+                {isLoadingLocation ? 'Getting...' : 'Use Current'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -158,16 +230,67 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Photos (Optional)</Text>
-          <Text style={styles.helperText}>Add photos to help providers understand the job better</Text>
-          <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
-            <Camera color="#2563EB" size={24} />
-            <Text style={styles.photoButtonText}>Take Photo</Text>
-          </TouchableOpacity>
-          {photos.length > 0 && (
+          <Text style={styles.label}>Estimated Duration (hours) *</Text>
+          <TextInput
+            style={styles.input}
+            value={estimatedDuration}
+            onChangeText={setEstimatedDuration}
+            placeholder="e.g. 4"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Priority Level *</Text>
+          <View style={styles.urgencyContainer}>
+            {urgencyLevels.map((level) => (
+              <TouchableOpacity
+                key={level.value}
+                style={[
+                  styles.urgencyChip,
+                  urgency === level.value && { backgroundColor: level.color }
+                ]}
+                onPress={() => setUrgency(level.value as any)}
+              >
+                <Text style={[
+                  styles.urgencyText,
+                  urgency === level.value && styles.activeUrgencyText
+                ]}>
+                  {level.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Photos *</Text>
+          <Text style={styles.helperText}>Add photos to help providers understand the job better (at least 1 required)</Text>
+          
+          <View style={styles.photoActions}>
+            <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
+              <Camera color="#2563EB" size={20} />
+              <Text style={styles.photoButtonText}>Take Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.photoButton} onPress={handlePickImage}>
+              <Plus color="#2563EB" size={20} />
+              <Text style={styles.photoButtonText}>Choose Photo</Text>
+            </TouchableOpacity>
+          </View>
+
+          {images.length > 0 && (
             <View style={styles.photoGrid}>
-              {photos.map((photo, index) => (
-                <Image key={index} source={{ uri: photo }} style={styles.photoThumbnail} />
+              {images.map((image, index) => (
+                <View key={index} style={styles.photoContainer}>
+                  <Image source={{ uri: image }} style={styles.photoThumbnail} />
+                  <TouchableOpacity 
+                    style={styles.removePhotoButton}
+                    onPress={() => removeImage(index)}
+                  >
+                    <X color="#FFFFFF" size={16} />
+                  </TouchableOpacity>
+                </View>
               ))}
             </View>
           )}
@@ -182,7 +305,7 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
           <Text style={styles.submitButtonText}>Post Job</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -249,6 +372,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    flex: 1,
   },
   inputWithIconText: {
     flex: 1,
@@ -256,6 +380,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#111827',
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  locationButton: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    justifyContent: 'center',
+  },
+  locationButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2563EB',
   },
   categoryContainer: {
     flexDirection: 'row',
@@ -282,7 +422,34 @@ const styles = StyleSheet.create({
   activeCategoryText: {
     color: '#FFFFFF',
   },
+  urgencyContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  urgencyChip: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  urgencyText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#6B7280',
+  },
+  activeUrgencyText: {
+    color: '#FFFFFF',
+  },
+  photoActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
   photoButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -291,10 +458,10 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderStyle: 'dashed',
     borderRadius: 12,
-    paddingVertical: 24,
+    paddingVertical: 16,
   },
   photoButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#2563EB',
     marginLeft: 8,
@@ -302,13 +469,26 @@ const styles = StyleSheet.create({
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
+    gap: 12,
+  },
+  photoContainer: {
+    position: 'relative',
   },
   photoThumbnail: {
     width: 80,
     height: 80,
     borderRadius: 8,
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footer: {
     flexDirection: 'row',
@@ -341,48 +521,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
-  },
-  cameraContainer: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
-  cameraControls: {
-    position: 'absolute',
-    bottom: 50,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  cancelCameraButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  cancelCameraText: {
-    color: '#FFFFFF',
-    fontFamily: 'Inter-SemiBold',
-  },
-  captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  captureButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#2563EB',
-  },
-  placeholder: {
-    width: 60,
   },
 });
