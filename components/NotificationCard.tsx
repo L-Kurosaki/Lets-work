@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Bell, CheckCircle, AlertTriangle, MessageCircle, Star } from 'lucide-react-native';
+import { Bell, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, MessageCircle, Star } from 'lucide-react-native';
 import { Notification } from '@/types';
 
 interface NotificationCardProps {
