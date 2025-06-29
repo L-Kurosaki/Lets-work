@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { Phone, Shield, AlertTriangle } from 'lucide-react-native';
+import { Phone, Shield, TriangleAlert as AlertTriangle } from 'lucide-react-native';
 
 interface EmergencyButtonProps {
   onEmergencyCall: () => void;

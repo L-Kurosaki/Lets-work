@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react-native';
+import { ArrowRight, ArrowLeft, CircleCheck as CheckCircle } from 'lucide-react-native';
 
 const onboardingSteps = [
   {
