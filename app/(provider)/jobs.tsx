@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
-import { Search, Filter, MapPin, Clock, DollarSign, Users, Zap, TrendingUp } from 'lucide-react-native';
+import { Search, Filter, MapPin, Clock, DollarSign, Users, Zap, TrendingUp, Briefcase } from 'lucide-react-native';
 import { Job } from '@/types';
 import { dataService } from '@/services/dataService';
 import { LocationService } from '@/services/locationService';
