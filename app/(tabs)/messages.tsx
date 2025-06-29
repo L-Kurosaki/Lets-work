@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
-import { MessageCircle, Clock, CheckCircle2, ArrowLeft } from 'lucide-react-native';
+import { MessageCircle, Clock, CircleCheck as CheckCircle2, ArrowLeft } from 'lucide-react-native';
 import { Message } from '@/types';
 import { dataService } from '@/services/dataService';
 import ChatInterface from '@/components/ChatInterface';

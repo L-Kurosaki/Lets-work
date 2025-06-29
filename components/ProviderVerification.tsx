@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { useState } from 'react';
-import { Upload, Camera, FileText, Award, Shield, CheckCircle, X } from 'lucide-react-native';
+import { Upload, Camera, FileText, Award, Shield, CircleCheck as CheckCircle, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Qualification } from '@/types';
 

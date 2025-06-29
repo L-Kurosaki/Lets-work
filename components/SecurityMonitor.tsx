@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
-import { Shield, Clock, AlertTriangle, Phone, CheckCircle } from 'lucide-react-native';
+import { Shield, Clock, TriangleAlert as AlertTriangle, Phone, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { Job } from '@/types';
 import { NotificationService } from '@/services/notificationService';
 
