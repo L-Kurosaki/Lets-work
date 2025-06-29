@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { LucideIcon } from 'lucide-react-native';
+import { Video as LucideIcon } from 'lucide-react-native';
 
 interface StatsCardProps {
   icon: LucideIcon;
