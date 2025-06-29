@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { Calendar, Clock, MapPin, User, Phone, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, User, Phone, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-react-native';
 
 interface ScheduledJob {
   id: string;
