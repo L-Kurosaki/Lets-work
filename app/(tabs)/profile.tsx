@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { User, Settings, Bell, Shield, CreditCard, MapPin, Star, CircleHelp as HelpCircle, LogOut, ChevronRight, Camera } from 'lucide-react-native';
+import { User, Settings, Bell, Shield, CreditCard, MapPin, Star, CircleHelp as HelpCircle, LogOut, ChevronRight, Camera, Briefcase, TrendingUp, Users } from 'lucide-react-native';
+import StatsCard from '@/components/StatsCard';
 
 export default function ProfileScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -77,7 +78,10 @@ export default function ProfileScreen() {
         <View style={styles.userCard}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <User color="#9CA3AF" size={32} />
+              <Image 
+                source={{ uri: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=400' }}
+                style={styles.avatarImage}
+              />
             </View>
             <TouchableOpacity style={styles.cameraButton}>
               <Camera color="#FFFFFF" size={16} />
@@ -85,9 +89,9 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>John Smith</Text>
-            <Text style={styles.userEmail}>john.smith@email.com</Text>
-            <Text style={styles.userLocation}>Johannesburg, South Africa</Text>
+            <Text style={styles.userName}>Michael Johnson</Text>
+            <Text style={styles.userEmail}>michael.j@email.com</Text>
+            <Text style={styles.userLocation}>Sandton, Johannesburg</Text>
           </View>
           
           <TouchableOpacity style={styles.editButton}>
@@ -97,17 +101,43 @@ export default function ProfileScreen() {
 
         {/* Stats Cards */}
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Jobs Posted</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <StatsCard
+                icon={Briefcase}
+                title="Jobs Posted"
+                value="12"
+                color="#2563EB"
+              />
+            </View>
+            <View style={styles.statCard}>
+              <StatsCard
+                icon={TrendingUp}
+                title="Completed"
+                value="8"
+                color="#059669"
+              />
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>8</Text>
-            <Text style={styles.statLabel}>Completed</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>4.8</Text>
-            <Text style={styles.statLabel}>Rating</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <StatsCard
+                icon={Star}
+                title="Rating"
+                value="4.8"
+                subtitle="Based on 23 reviews"
+                color="#F59E0B"
+              />
+            </View>
+            <View style={styles.statCard}>
+              <StatsCard
+                icon={Users}
+                title="Providers"
+                value="15"
+                subtitle="Worked with"
+                color="#8B5CF6"
+              />
+            </View>
           </View>
         </View>
 
@@ -181,6 +211,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   cameraButton: {
     position: 'absolute',
@@ -228,36 +263,15 @@ const styles = StyleSheet.create({
     color: '#2563EB',
   },
   statsContainer: {
-    flexDirection: 'row',
     marginBottom: 24,
+  },
+  statsRow: {
+    flexDirection: 'row',
     gap: 12,
+    marginBottom: 12,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    textAlign: 'center',
   },
   section: {
     marginBottom: 24,

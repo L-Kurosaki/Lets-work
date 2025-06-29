@@ -16,19 +16,47 @@ class DataService {
   }
 
   private initializeMockData() {
-    // Initialize with more diverse mock data across different locations
+    // Initialize with comprehensive mock data
     this.jobs = [
       {
         id: '1',
         title: 'Deep Clean 3-Bedroom House',
-        description: 'Need a thorough cleaning of my 3-bedroom house in Sandton. Kitchen, bathrooms, and all living areas. Looking for someone with experience in deep cleaning and attention to detail.',
+        description: 'Need a thorough cleaning of my 3-bedroom house in Sandton. Kitchen, bathrooms, and all living areas. Looking for someone with experience in deep cleaning and attention to detail. House is approximately 180sqm with 2 bathrooms, open plan kitchen/living area, and 3 bedrooms. Prefer eco-friendly cleaning products.',
         location: 'Sandton, Johannesburg',
         coordinates: { latitude: -26.1076, longitude: 28.0567 },
         budget: 'R800 - R1200',
         timePosted: '2 hours ago',
-        bids: [],
+        bids: [
+          {
+            id: 'bid1',
+            jobId: '1',
+            providerId: 'provider1',
+            providerName: 'Sarah Mokoena',
+            providerAvatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
+            amount: 'R950',
+            message: 'Hi! I have 8+ years of experience in deep cleaning and use only eco-friendly products. I can complete this job in 4-5 hours and guarantee excellent results. I bring all my own equipment and supplies.',
+            timeSubmitted: '1 hour ago',
+            status: 'pending',
+            estimatedDuration: 4
+          },
+          {
+            id: 'bid2',
+            jobId: '1',
+            providerId: 'provider5',
+            providerName: 'Linda Nkomo',
+            providerAvatar: 'https://images.pexels.com/photos/3763188/pexels-photo-3763188.jpeg?auto=compress&cs=tinysrgb&w=400',
+            amount: 'R850',
+            message: 'Professional cleaning service with 6 years experience. I specialize in deep cleaning and have excellent references. Can start tomorrow morning.',
+            timeSubmitted: '45 minutes ago',
+            status: 'pending',
+            estimatedDuration: 5
+          }
+        ],
         category: 'Cleaning',
-        images: ['https://images.pexels.com/photos/4099467/pexels-photo-4099467.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        images: [
+          'https://images.pexels.com/photos/4099467/pexels-photo-4099467.jpeg?auto=compress&cs=tinysrgb&w=400',
+          'https://images.pexels.com/photos/6197119/pexels-photo-6197119.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
         urgency: 'medium',
         status: 'posted',
         customerId: 'customer1',
@@ -37,14 +65,30 @@ class DataService {
       {
         id: '2',
         title: 'Garden Maintenance & Lawn Care',
-        description: 'Weekly garden maintenance needed. Trimming hedges, lawn mowing, and general garden cleanup. Must have own equipment.',
+        description: 'Weekly garden maintenance needed for large suburban garden. Includes lawn mowing, hedge trimming, weeding, and general garden cleanup. Garden is approximately 500sqm with established flower beds, vegetable garden, and large lawn area. Must have own equipment and transport.',
         location: 'Rosebank, Johannesburg',
         coordinates: { latitude: -26.1448, longitude: 28.0436 },
         budget: 'R400 - R600',
         timePosted: '4 hours ago',
-        bids: [],
+        bids: [
+          {
+            id: 'bid3',
+            jobId: '2',
+            providerId: 'provider2',
+            providerName: 'Themba Dlamini',
+            providerAvatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
+            amount: 'R500',
+            message: 'I have 10+ years of gardening experience and all professional equipment. I can maintain your garden weekly and ensure it stays beautiful year-round.',
+            timeSubmitted: '2 hours ago',
+            status: 'pending',
+            estimatedDuration: 3
+          }
+        ],
         category: 'Gardening',
-        images: ['https://images.pexels.com/photos/1301856/pexels-photo-1301856.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        images: [
+          'https://images.pexels.com/photos/1301856/pexels-photo-1301856.jpeg?auto=compress&cs=tinysrgb&w=400',
+          'https://images.pexels.com/photos/1453499/pexels-photo-1453499.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
         urgency: 'low',
         status: 'posted',
         customerId: 'customer1',
@@ -53,14 +97,30 @@ class DataService {
       {
         id: '3',
         title: 'Interior Wall Painting',
-        description: 'Need to paint the interior walls of my 2-bedroom apartment. All materials will be provided. Looking for experienced painter.',
+        description: 'Need to paint the interior walls of my 2-bedroom apartment. All materials will be provided including primer, paint, brushes, and rollers. Looking for experienced painter who can work cleanly and efficiently. Walls are in good condition, just need a fresh coat.',
         location: 'Melville, Johannesburg',
         coordinates: { latitude: -26.1875, longitude: 28.0103 },
         budget: 'R1500 - R2500',
         timePosted: '1 day ago',
-        bids: [],
+        bids: [
+          {
+            id: 'bid4',
+            jobId: '3',
+            providerId: 'provider3',
+            providerName: 'Maria Santos',
+            providerAvatar: 'https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=400',
+            amount: 'R1800',
+            message: 'Professional painter with 12+ years experience. I guarantee clean, precise work and will protect all furniture and floors. Can complete in 2 days.',
+            timeSubmitted: '18 hours ago',
+            status: 'pending',
+            estimatedDuration: 6
+          }
+        ],
         category: 'Painting',
-        images: ['https://images.pexels.com/photos/1669799/pexels-photo-1669799.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        images: [
+          'https://images.pexels.com/photos/1669799/pexels-photo-1669799.jpeg?auto=compress&cs=tinysrgb&w=400',
+          'https://images.pexels.com/photos/6474471/pexels-photo-6474471.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
         urgency: 'medium',
         status: 'posted',
         customerId: 'customer2',
@@ -69,14 +129,29 @@ class DataService {
       {
         id: '4',
         title: 'Bathroom Plumbing Repair',
-        description: 'Leaking tap and blocked drain in main bathroom. Need urgent repair. Must be licensed plumber.',
+        description: 'Urgent plumbing repair needed in main bathroom. Leaking tap in basin and blocked drain in shower. Water pressure also seems low. Need licensed plumber with experience in residential repairs. Can provide access anytime.',
         location: 'Fourways, Johannesburg',
         coordinates: { latitude: -25.9269, longitude: 28.0094 },
         budget: 'R500 - R800',
         timePosted: '3 hours ago',
-        bids: [],
+        bids: [
+          {
+            id: 'bid5',
+            jobId: '4',
+            providerId: 'provider4',
+            providerName: 'John Williams',
+            providerAvatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400',
+            amount: 'R650',
+            message: 'Licensed plumber with 15+ years experience. I can fix both issues today and check the water pressure. All work comes with 6-month guarantee.',
+            timeSubmitted: '1 hour ago',
+            status: 'pending',
+            estimatedDuration: 2
+          }
+        ],
         category: 'Plumbing',
-        images: ['https://images.pexels.com/photos/8486944/pexels-photo-8486944.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        images: [
+          'https://images.pexels.com/photos/8486944/pexels-photo-8486944.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
         urgency: 'high',
         status: 'posted',
         customerId: 'customer3',
@@ -85,14 +160,17 @@ class DataService {
       {
         id: '5',
         title: 'Electrical Socket Installation',
-        description: 'Need 3 new electrical sockets installed in home office. Must be qualified electrician with COC.',
+        description: 'Need 3 new electrical sockets installed in home office. Current setup is insufficient for all equipment. Must be qualified electrician with valid COC. Prefer someone who can work during weekday business hours.',
         location: 'Randburg, Johannesburg',
         coordinates: { latitude: -26.0939, longitude: 27.9621 },
         budget: 'R800 - R1200',
         timePosted: '6 hours ago',
         bids: [],
         category: 'Electrical',
-        images: ['https://images.pexels.com/photos/257736/pexels-photo-257736.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        images: [
+          'https://images.pexels.com/photos/257736/pexels-photo-257736.jpeg?auto=compress&cs=tinysrgb&w=400',
+          'https://images.pexels.com/photos/162553/keys-workshop-mechanic-tools-162553.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
         urgency: 'medium',
         status: 'posted',
         customerId: 'customer4',
@@ -100,19 +178,59 @@ class DataService {
       },
       {
         id: '6',
-        title: 'Moving Assistance',
-        description: 'Need help moving from 2-bedroom apartment to new house. Heavy furniture included. Need 2-3 people.',
+        title: 'Moving Assistance - 2 Bedroom Apartment',
+        description: 'Need help moving from 2-bedroom apartment to new house across town. Heavy furniture included (couch, dining table, beds, appliances). Need 2-3 strong people with moving experience. Truck/bakkie will be provided.',
         location: 'Bryanston, Johannesburg',
         coordinates: { latitude: -26.0469, longitude: 28.0187 },
         budget: 'R1000 - R1500',
         timePosted: '5 hours ago',
         bids: [],
         category: 'Moving',
-        images: ['https://images.pexels.com/photos/7464230/pexels-photo-7464230.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        images: [
+          'https://images.pexels.com/photos/7464230/pexels-photo-7464230.jpeg?auto=compress&cs=tinysrgb&w=400',
+          'https://images.pexels.com/photos/4246120/pexels-photo-4246120.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
         urgency: 'high',
         status: 'posted',
         customerId: 'customer5',
         estimatedDuration: 5
+      },
+      {
+        id: '7',
+        title: 'Kitchen Deep Clean & Appliance Service',
+        description: 'Complete kitchen deep clean including oven, refrigerator, microwave, and all surfaces. Kitchen hasn\'t been deep cleaned in 6 months. Need someone experienced with appliance cleaning and food safety standards.',
+        location: 'Parktown, Johannesburg',
+        coordinates: { latitude: -26.1715, longitude: 28.0441 },
+        budget: 'R600 - R900',
+        timePosted: '8 hours ago',
+        bids: [],
+        category: 'Cleaning',
+        images: [
+          'https://images.pexels.com/photos/2724749/pexels-photo-2724749.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
+        urgency: 'medium',
+        status: 'posted',
+        customerId: 'customer6',
+        estimatedDuration: 4
+      },
+      {
+        id: '8',
+        title: 'Handyman - Multiple Small Repairs',
+        description: 'Various small repairs around the house: fix squeaky door hinges, replace broken tiles, patch small holes in walls, fix loose cabinet handles. Looking for reliable handyman who can handle multiple tasks efficiently.',
+        location: 'Greenside, Johannesburg',
+        coordinates: { latitude: -26.1542, longitude: 28.0186 },
+        budget: 'R800 - R1200',
+        timePosted: '12 hours ago',
+        bids: [],
+        category: 'Handyman',
+        images: [
+          'https://images.pexels.com/photos/5691659/pexels-photo-5691659.jpeg?auto=compress&cs=tinysrgb&w=400',
+          'https://images.pexels.com/photos/5025639/pexels-photo-5025639.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
+        urgency: 'low',
+        status: 'posted',
+        customerId: 'customer7',
+        estimatedDuration: 4
       }
     ];
 
@@ -129,9 +247,18 @@ class DataService {
         hourlyRate: 'R180/hour',
         completedJobs: 245,
         isVerified: true,
-        badges: ['Top Rated', 'Quick Response'],
-        description: 'Professional cleaner with 8+ years experience. Specializing in residential deep cleaning and move-in/out services.',
-        qualifications: [],
+        badges: ['Top Rated', 'Quick Response', 'Eco-Friendly'],
+        description: 'Professional cleaner with 8+ years experience. Specializing in residential deep cleaning and move-in/out services. I use only eco-friendly products and guarantee satisfaction.',
+        qualifications: [
+          {
+            id: 'qual1',
+            type: 'certificate',
+            title: 'Professional Cleaning Certificate',
+            description: 'Certified by SA Cleaning Institute',
+            verificationStatus: 'verified',
+            dateAdded: '2023-01-15'
+          }
+        ],
         isOnline: true
       },
       {
@@ -146,9 +273,18 @@ class DataService {
         hourlyRate: 'R150/hour',
         completedJobs: 156,
         isVerified: true,
-        badges: ['Eco-Friendly', 'Reliable'],
-        description: 'Experienced gardener with expertise in lawn care, hedge trimming, and landscape maintenance.',
-        qualifications: [],
+        badges: ['Eco-Friendly', 'Reliable', 'Landscaping Expert'],
+        description: 'Experienced gardener with expertise in lawn care, hedge trimming, and landscape maintenance. I have my own professional equipment and transport.',
+        qualifications: [
+          {
+            id: 'qual2',
+            type: 'certificate',
+            title: 'Horticulture Certificate',
+            description: 'Certified in garden maintenance and landscaping',
+            verificationStatus: 'verified',
+            dateAdded: '2023-02-20'
+          }
+        ],
         isOnline: true
       },
       {
@@ -163,9 +299,18 @@ class DataService {
         hourlyRate: 'R200/hour',
         completedJobs: 312,
         isVerified: true,
-        badges: ['Master Painter', 'Quality Guarantee'],
-        description: 'Professional painter with 12+ years experience. Specializing in interior and exterior painting.',
-        qualifications: [],
+        badges: ['Master Painter', 'Quality Guarantee', 'Interior Specialist'],
+        description: 'Professional painter with 12+ years experience. Specializing in interior and exterior painting with attention to detail and clean work practices.',
+        qualifications: [
+          {
+            id: 'qual3',
+            type: 'license',
+            title: 'Professional Painter License',
+            description: 'Licensed professional painter',
+            verificationStatus: 'verified',
+            dateAdded: '2023-01-10'
+          }
+        ],
         isOnline: true
       },
       {
@@ -180,10 +325,91 @@ class DataService {
         hourlyRate: 'R250/hour',
         completedJobs: 189,
         isVerified: true,
-        badges: ['Licensed Plumber', 'Emergency Service'],
-        description: 'Licensed plumber with 15+ years experience. Available for emergency repairs and installations.',
+        badges: ['Licensed Plumber', 'Emergency Service', '24/7 Available'],
+        description: 'Licensed plumber with 15+ years experience. Available for emergency repairs and installations. All work comes with guarantee.',
+        qualifications: [
+          {
+            id: 'qual4',
+            type: 'license',
+            title: 'Master Plumber License',
+            description: 'Licensed master plumber with COC',
+            verificationStatus: 'verified',
+            dateAdded: '2023-01-05'
+          }
+        ],
+        isOnline: true
+      },
+      {
+        id: 'provider5',
+        name: 'Linda Nkomo',
+        avatar: 'https://images.pexels.com/photos/3763188/pexels-photo-3763188.jpeg?auto=compress&cs=tinysrgb&w=400',
+        rating: 4.6,
+        reviewCount: 78,
+        specialty: 'House Cleaning',
+        location: 'Sandton',
+        coordinates: { latitude: -26.1076, longitude: 28.0567 },
+        hourlyRate: 'R160/hour',
+        completedJobs: 134,
+        isVerified: true,
+        badges: ['Reliable', 'Detail Oriented'],
+        description: 'Professional cleaning service with 6 years experience. I specialize in residential cleaning and have excellent references.',
         qualifications: [],
         isOnline: true
+      },
+      {
+        id: 'provider6',
+        name: 'David Mthembu',
+        avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=400',
+        rating: 4.8,
+        reviewCount: 92,
+        specialty: 'Electrical Work',
+        location: 'Randburg',
+        coordinates: { latitude: -26.0939, longitude: 27.9621 },
+        hourlyRate: 'R280/hour',
+        completedJobs: 167,
+        isVerified: true,
+        badges: ['Licensed Electrician', 'Safety Certified', 'COC Provider'],
+        description: 'Qualified electrician with 10+ years experience. Specializing in residential electrical work and safety compliance.',
+        qualifications: [
+          {
+            id: 'qual5',
+            type: 'license',
+            title: 'Electrical License',
+            description: 'Licensed electrician with COC certification',
+            verificationStatus: 'verified',
+            dateAdded: '2023-01-12'
+          }
+        ],
+        isOnline: false
+      }
+    ];
+
+    // Initialize bids in jobs
+    this.jobs.forEach(job => {
+      job.bids = this.bids.filter(bid => bid.jobId === job.id);
+    });
+
+    // Initialize users
+    this.users = [
+      {
+        id: 'customer1',
+        name: 'Michael Johnson',
+        email: 'michael.j@email.com',
+        location: 'Sandton, Johannesburg',
+        coordinates: { latitude: -26.1076, longitude: 28.0567 },
+        isProvider: false,
+        joinDate: '2023-06-15',
+        verificationStatus: 'verified'
+      },
+      {
+        id: 'customer2',
+        name: 'Emma Thompson',
+        email: 'emma.t@email.com',
+        location: 'Melville, Johannesburg',
+        coordinates: { latitude: -26.1875, longitude: 28.0103 },
+        isProvider: false,
+        joinDate: '2023-08-20',
+        verificationStatus: 'verified'
       }
     ];
   }
@@ -218,7 +444,12 @@ class DataService {
   }
 
   async getJobById(id: string): Promise<Job | null> {
-    return this.jobs.find(job => job.id === id) || null;
+    const job = this.jobs.find(job => job.id === id);
+    if (job) {
+      // Ensure bids are populated
+      job.bids = this.bids.filter(bid => bid.jobId === id);
+    }
+    return job || null;
   }
 
   async createJob(jobData: Omit<Job, 'id' | 'bids' | 'timePosted' | 'status'>): Promise<Job> {
@@ -281,6 +512,11 @@ class DataService {
       if (jobIndex !== -1) {
         this.jobs[jobIndex].status = 'confirmed';
         this.jobs[jobIndex].providerId = bid.providerId;
+        
+        // Update bids in job object
+        this.jobs[jobIndex].bids = this.jobs[jobIndex].bids.map(b => 
+          b.id === bidId ? { ...b, status: 'accepted' } : { ...b, status: 'rejected' }
+        );
       }
 
       // Reject other bids for the same job
@@ -412,6 +648,32 @@ class DataService {
       message: 'Thank you for confirming your safety. Monitoring continues.',
       data: { jobId, type: 'safety_confirmed' }
     });
+  }
+
+  // Review methods
+  async createReview(reviewData: Omit<Review, 'id' | 'timestamp'>): Promise<Review> {
+    const newReview: Review = {
+      ...reviewData,
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString()
+    };
+
+    this.reviews.push(newReview);
+    
+    // Update provider rating
+    const provider = this.providers.find(p => p.id === reviewData.revieweeId);
+    if (provider) {
+      const providerReviews = this.reviews.filter(r => r.revieweeId === provider.id);
+      const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length;
+      provider.rating = Math.round(avgRating * 10) / 10;
+      provider.reviewCount = providerReviews.length;
+    }
+
+    return newReview;
+  }
+
+  async getReviewsForProvider(providerId: string): Promise<Review[]> {
+    return this.reviews.filter(review => review.revieweeId === providerId);
   }
 }
 
