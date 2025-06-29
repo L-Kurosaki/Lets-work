@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Modal, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Clock, Plus, Filter } from 'lucide-react-native';
+import { Search, MapPin, Star, Clock, Plus, Filter, Zap, TrendingUp, Users } from 'lucide-react-native';
 import { Job } from '@/types';
 import { dataService } from '@/services/dataService';
 import { LocationService } from '@/services/locationService';
@@ -17,6 +17,7 @@ export default function JobsScreen() {
   const [showBids, setShowBids] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const filters = ['All', 'Cleaning', 'Gardening', 'Painting', 'Handyman', 'Plumbing', 'Electrical'];
 
@@ -42,6 +43,12 @@ export default function JobsScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadJobs();
+    setRefreshing(false);
   };
 
   const handleCreateJob = async (jobData: any) => {
@@ -74,12 +81,10 @@ export default function JobsScreen() {
   };
 
   const handleRejectBid = async (bidId: string) => {
-    // In a real app, you'd implement bid rejection
     Alert.alert('Success', 'Bid rejected.');
   };
 
   const handleMessageProvider = (providerId: string) => {
-    // Navigate to messages with this provider
     Alert.alert('Message', 'Opening chat with provider...');
   };
 
@@ -111,26 +116,92 @@ export default function JobsScreen() {
     return matchesSearch && matchesFilter;
   });
 
+  const renderJobCard = (job: Job) => (
+    <TouchableOpacity key={job.id} style={styles.jobCard} onPress={() => handleJobPress(job)}>
+      <View style={styles.jobCardHeader}>
+        {job.images.length > 0 && (
+          <Image source={{ uri: job.images[0] }} style={styles.jobImage} />
+        )}
+        <View style={styles.urgencyIndicator}>
+          <View style={[styles.urgencyDot, { backgroundColor: getUrgencyColor(job.urgency) }]} />
+        </View>
+      </View>
+      
+      <View style={styles.jobContent}>
+        <View style={styles.jobTitleRow}>
+          <Text style={styles.jobTitle} numberOfLines={2}>{job.title}</Text>
+          <View style={styles.badgeContainer}>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(job.status) }]}>
+              <Text style={styles.statusText}>
+                {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+              </Text>
+            </View>
+          </View>
+        </View>
+        
+        <Text style={styles.jobDescription} numberOfLines={2}>{job.description}</Text>
+        
+        <View style={styles.jobMeta}>
+          <View style={styles.locationContainer}>
+            <MapPin color="#6B7280" size={14} />
+            <Text style={styles.locationText}>{job.location}</Text>
+          </View>
+          
+          <View style={styles.timeContainer}>
+            <Clock color="#6B7280" size={14} />
+            <Text style={styles.timeText}>{job.timePosted}</Text>
+          </View>
+        </View>
+        
+        <View style={styles.jobFooter}>
+          <View style={styles.budgetContainer}>
+            <Text style={styles.budgetText}>{job.budget}</Text>
+            <Text style={styles.durationText}>{job.estimatedDuration}h estimated</Text>
+          </View>
+          <View style={styles.bidsContainer}>
+            <Users color="#2563EB" size={16} />
+            <Text style={styles.bidsText}>{job.bids.length} bid{job.bids.length !== 1 ? 's' : ''}</Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Enhanced Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Available Jobs</Text>
-        <Text style={styles.headerSubtitle}>Find your next piece job</Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.headerTitle}>Find Your Next</Text>
+            <Text style={styles.headerTitleAccent}>Piece Job</Text>
+          </View>
+          <TouchableOpacity style={styles.notificationButton}>
+            <View style={styles.notificationDot} />
+            <TrendingUp color="#2563EB" size={24} />
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.headerSubtitle}>Trusted local services at your fingertips</Text>
       </View>
 
+      {/* Enhanced Search */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Search color="#6B7280" size={20} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search jobs..."
+            placeholder="Search for cleaning, gardening, repairs..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#9CA3AF"
           />
+          <TouchableOpacity style={styles.filterButton}>
+            <Filter color="#6B7280" size={20} />
+          </TouchableOpacity>
         </View>
       </View>
 
+      {/* Enhanced Filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer}>
         {filters.map((filter) => (
           <TouchableOpacity
@@ -151,13 +222,24 @@ export default function JobsScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView style={styles.jobsList} showsVerticalScrollIndicator={false}>
+      {/* Jobs List */}
+      <ScrollView 
+        style={styles.jobsList} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {loading ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading jobs...</Text>
+            <View style={styles.loadingSpinner} />
+            <Text style={styles.loadingText}>Finding jobs near you...</Text>
           </View>
         ) : filteredJobs.length === 0 ? (
           <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Zap color="#D1D5DB" size={48} />
+            </View>
             <Text style={styles.emptyTitle}>No jobs found</Text>
             <Text style={styles.emptyDescription}>
               {searchQuery || activeFilter !== 'All' 
@@ -165,62 +247,24 @@ export default function JobsScreen() {
                 : 'Be the first to post a job in your area!'
               }
             </Text>
+            <TouchableOpacity style={styles.emptyAction} onPress={() => setShowJobForm(true)}>
+              <Text style={styles.emptyActionText}>Post Your First Job</Text>
+            </TouchableOpacity>
           </View>
         ) : (
-          filteredJobs.map((job) => (
-            <TouchableOpacity key={job.id} style={styles.jobCard} onPress={() => handleJobPress(job)}>
-              {job.images.length > 0 && (
-                <Image source={{ uri: job.images[0] }} style={styles.jobImage} />
-              )}
-              <View style={styles.jobContent}>
-                <View style={styles.jobHeader}>
-                  <Text style={styles.jobTitle}>{job.title}</Text>
-                  <View style={styles.badgeContainer}>
-                    <View style={[styles.urgencyBadge, { backgroundColor: getUrgencyColor(job.urgency) }]}>
-                      <Text style={styles.urgencyText}>
-                        {job.urgency.charAt(0).toUpperCase() + job.urgency.slice(1)}
-                      </Text>
-                    </View>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(job.status) }]}>
-                      <Text style={styles.statusText}>
-                        {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-                
-                <Text style={styles.jobDescription} numberOfLines={2}>{job.description}</Text>
-                
-                <View style={styles.jobMeta}>
-                  <View style={styles.locationContainer}>
-                    <MapPin color="#6B7280" size={14} />
-                    <Text style={styles.locationText}>{job.location}</Text>
-                  </View>
-                  
-                  <View style={styles.timeContainer}>
-                    <Clock color="#6B7280" size={14} />
-                    <Text style={styles.timeText}>{job.timePosted}</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.jobFooter}>
-                  <Text style={styles.budgetText}>{job.budget}</Text>
-                  <View style={styles.bidsContainer}>
-                    <Text style={styles.bidsText}>{job.bids.length} bid{job.bids.length !== 1 ? 's' : ''}</Text>
-                    <Star color="#F59E0B" size={14} fill="#F59E0B" />
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))
+          <View style={styles.jobsGrid}>
+            {filteredJobs.map(renderJobCard)}
+          </View>
         )}
       </ScrollView>
 
+      {/* Enhanced FAB */}
       <TouchableOpacity style={styles.fab} onPress={() => setShowJobForm(true)}>
         <Plus color="#FFFFFF" size={24} />
+        <Text style={styles.fabText}>Post Job</Text>
       </TouchableOpacity>
 
-      {/* Job Post Form Modal */}
+      {/* Modals */}
       <Modal
         visible={showJobForm}
         animationType="slide"
@@ -232,7 +276,6 @@ export default function JobsScreen() {
         />
       </Modal>
 
-      {/* Bids List Modal */}
       <Modal
         visible={showBids}
         animationType="slide"
@@ -262,57 +305,98 @@ export default function JobsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 24,
     backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: 'Inter-Bold',
-    color: '#111827',
+    color: '#0F172A',
+    lineHeight: 38,
+  },
+  headerTitleAccent: {
+    fontSize: 32,
+    fontFamily: 'Inter-Bold',
+    color: '#2563EB',
+    lineHeight: 38,
   },
   headerSubtitle: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#6B7280',
+    color: '#64748B',
     marginTop: 4,
+  },
+  notificationButton: {
+    position: 'relative',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
   },
   searchContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   searchInput: {
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#111827',
+    color: '#0F172A',
+  },
+  filterButton: {
+    marginLeft: 12,
+    padding: 4,
   },
   filtersContainer: {
     paddingLeft: 24,
     marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
   },
   filterChip: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
   },
   activeFilterChip: {
     backgroundColor: '#2563EB',
@@ -320,8 +404,8 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
+    fontFamily: 'Inter-SemiBold',
+    color: '#64748B',
   },
   activeFilterText: {
     color: '#FFFFFF',
@@ -330,59 +414,107 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
   },
+  jobsGrid: {
+    paddingBottom: 100,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
+  },
+  loadingSpinner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#E2E8F0',
+    borderTopColor: '#2563EB',
+    marginBottom: 16,
   },
   loadingText: {
     fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
+    fontFamily: 'Inter-Medium',
+    color: '#64748B',
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Inter-SemiBold',
-    color: '#374151',
+    color: '#334155',
     marginBottom: 8,
   },
   emptyDescription: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#6B7280',
+    color: '#64748B',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  emptyAction: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  emptyActionText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
   },
   jobCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  jobCardHeader: {
+    position: 'relative',
   },
   jobImage: {
     width: '100%',
-    height: 120,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    height: 140,
+  },
+  urgencyIndicator: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  urgencyDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   jobContent: {
-    padding: 16,
+    padding: 20,
   },
-  jobHeader: {
+  jobTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -391,110 +523,120 @@ const styles = StyleSheet.create({
   jobTitle: {
     fontSize: 18,
     fontFamily: 'Inter-SemiBold',
-    color: '#111827',
+    color: '#0F172A',
     flex: 1,
-    marginRight: 8,
+    marginRight: 12,
+    lineHeight: 24,
   },
   badgeContainer: {
     alignItems: 'flex-end',
-    gap: 4,
-  },
-  urgencyBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  urgencyText: {
-    fontSize: 10,
-    fontFamily: 'Inter-SemiBold',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
   },
   statusBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   jobDescription: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    lineHeight: 20,
-    marginBottom: 12,
+    color: '#64748B',
+    lineHeight: 22,
+    marginBottom: 16,
   },
   jobMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   locationText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    marginLeft: 4,
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: '#64748B',
+    marginLeft: 6,
   },
   timeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   timeText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    marginLeft: 4,
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: '#64748B',
+    marginLeft: 6,
   },
   jobFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  budgetContainer: {
+    flex: 1,
+  },
   budgetText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
     color: '#059669',
+    marginBottom: 2,
+  },
+  durationText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#94A3B8',
   },
   bidsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   bidsText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    marginRight: 4,
+    fontSize: 13,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2563EB',
+    marginLeft: 6,
   },
   fab: {
     position: 'absolute',
     bottom: 32,
     right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#2563EB',
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 28,
     shadowColor: '#2563EB',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  fabText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+    marginLeft: 8,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -503,12 +645,12 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#E2E8F0',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Inter-SemiBold',
-    color: '#111827',
+    color: '#0F172A',
     flex: 1,
   },
   closeButton: {

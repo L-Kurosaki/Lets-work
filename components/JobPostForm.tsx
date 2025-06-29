@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Alert, ScrollView, Dimensions } from 'react-native';
 import { useState } from 'react';
-import { Camera, MapPin, DollarSign, X, Plus } from 'lucide-react-native';
+import { Camera, MapPin, DollarSign, X, Plus, Clock, Zap, AlertCircle } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { LocationService } from '@/services/locationService';
 import { Job } from '@/types';
@@ -9,6 +9,8 @@ interface JobPostFormProps {
   onSubmit: (jobData: Omit<Job, 'id' | 'bids' | 'timePosted' | 'status'>) => void;
   onCancel: () => void;
 }
+
+const { width } = Dimensions.get('window');
 
 export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
   const [title, setTitle] = useState('');
@@ -21,11 +23,21 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
   const [urgency, setUrgency] = useState<'low' | 'medium' | 'high'>('medium');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
-  const categories = ['Cleaning', 'Gardening', 'Painting', 'Handyman', 'Plumbing', 'Electrical', 'Moving', 'Other'];
+  const categories = [
+    { id: 'Cleaning', label: 'Cleaning', icon: '🧹', color: '#3B82F6' },
+    { id: 'Gardening', label: 'Gardening', icon: '🌱', color: '#10B981' },
+    { id: 'Painting', label: 'Painting', icon: '🎨', color: '#F59E0B' },
+    { id: 'Handyman', label: 'Handyman', icon: '🔧', color: '#8B5CF6' },
+    { id: 'Plumbing', label: 'Plumbing', icon: '🚿', color: '#06B6D4' },
+    { id: 'Electrical', label: 'Electrical', icon: '⚡', color: '#F97316' },
+    { id: 'Moving', label: 'Moving', icon: '📦', color: '#EF4444' },
+    { id: 'Other', label: 'Other', icon: '⭐', color: '#6B7280' }
+  ];
+
   const urgencyLevels = [
-    { value: 'low', label: 'Low Priority', color: '#10B981' },
-    { value: 'medium', label: 'Medium Priority', color: '#F59E0B' },
-    { value: 'high', label: 'Urgent', color: '#EF4444' }
+    { value: 'low', label: 'Flexible', description: 'Can wait a few days', color: '#10B981', icon: '🕐' },
+    { value: 'medium', label: 'Soon', description: 'Within 1-2 days', color: '#F59E0B', icon: '⏰' },
+    { value: 'high', label: 'Urgent', description: 'ASAP - Today/Tomorrow', color: '#EF4444', icon: '🚨' }
   ];
 
   const handleTakePhoto = async () => {
@@ -83,7 +95,6 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
     try {
       const coords = await LocationService.getCurrentLocation();
       if (coords) {
-        // In a real app, you'd reverse geocode these coordinates to get an address
         setLocation(`${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`);
       } else {
         Alert.alert('Location Error', 'Unable to get your current location. Please enter manually.');
@@ -124,7 +135,7 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
         category,
         images,
         urgency,
-        customerId: 'customer1', // In a real app, this would come from auth
+        customerId: 'customer1',
         estimatedDuration: duration
       };
 
@@ -135,72 +146,129 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={onCancel} style={styles.cancelButton}>
+          <X color="#64748B" size={24} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Post a Job</Text>
-        <Text style={styles.headerSubtitle}>Describe your job and get bids from trusted providers</Text>
+        <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.form}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Job Title *</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="e.g. Deep clean 3-bedroom house"
-            placeholderTextColor="#9CA3AF"
-          />
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Progress Indicator */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View style={[styles.progressFill, { width: '60%' }]} />
+          </View>
+          <Text style={styles.progressText}>Step 1 of 2</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Category *</Text>
-          <View style={styles.categoryContainer}>
+        {/* Job Title */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>What needs to be done?</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.titleInput}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="e.g. Deep clean my 3-bedroom house"
+              placeholderTextColor="#94A3B8"
+            />
+          </View>
+        </View>
+
+        {/* Category Selection */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Choose a category</Text>
+          <View style={styles.categoryGrid}>
             {categories.map((cat) => (
               <TouchableOpacity
-                key={cat}
+                key={cat.id}
                 style={[
-                  styles.categoryChip,
-                  category === cat && styles.activeCategoryChip
+                  styles.categoryCard,
+                  category === cat.id && styles.activeCategoryCard,
+                  { borderColor: category === cat.id ? cat.color : '#E2E8F0' }
                 ]}
-                onPress={() => setCategory(cat)}
+                onPress={() => setCategory(cat.id)}
               >
+                <Text style={styles.categoryIcon}>{cat.icon}</Text>
                 <Text style={[
-                  styles.categoryText,
-                  category === cat && styles.activeCategoryText
+                  styles.categoryLabel,
+                  category === cat.id && { color: cat.color }
                 ]}>
-                  {cat}
+                  {cat.label}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Description *</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Describe the work needed in detail..."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
+        {/* Description */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Describe the job in detail</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textArea}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Provide specific details about what you need done. Include any special requirements, materials needed, or preferences..."
+              placeholderTextColor="#94A3B8"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Location *</Text>
-          <View style={styles.locationContainer}>
-            <View style={styles.inputWithIcon}>
-              <MapPin color="#6B7280" size={20} />
+        {/* Photos */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Add photos</Text>
+          <Text style={styles.sectionSubtitle}>Help providers understand the job better (at least 1 required)</Text>
+          
+          <View style={styles.photoSection}>
+            <View style={styles.photoActions}>
+              <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
+                <Camera color="#2563EB" size={24} />
+                <Text style={styles.photoButtonText}>Take Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.photoButton} onPress={handlePickImage}>
+                <Plus color="#2563EB" size={24} />
+                <Text style={styles.photoButtonText}>Choose Photo</Text>
+              </TouchableOpacity>
+            </View>
+
+            {images.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoScroll}>
+                {images.map((image, index) => (
+                  <View key={index} style={styles.photoContainer}>
+                    <Image source={{ uri: image }} style={styles.photoThumbnail} />
+                    <TouchableOpacity 
+                      style={styles.removePhotoButton}
+                      onPress={() => removeImage(index)}
+                    >
+                      <X color="#FFFFFF" size={16} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+
+        {/* Location */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Where is this job?</Text>
+          <View style={styles.locationRow}>
+            <View style={styles.locationInput}>
+              <MapPin color="#64748B" size={20} />
               <TextInput
-                style={styles.inputWithIconText}
+                style={styles.locationText}
                 value={location}
                 onChangeText={setLocation}
-                placeholder="e.g. Sandton, Johannesburg"
-                placeholderTextColor="#9CA3AF"
+                placeholder="Enter address or area"
+                placeholderTextColor="#94A3B8"
               />
             </View>
             <TouchableOpacity 
@@ -215,233 +283,205 @@ export default function JobPostForm({ onSubmit, onCancel }: JobPostFormProps) {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Budget Range *</Text>
-          <View style={styles.inputWithIcon}>
-            <DollarSign color="#6B7280" size={20} />
-            <TextInput
-              style={styles.inputWithIconText}
-              value={budget}
-              onChangeText={setBudget}
-              placeholder="e.g. R500 - R800"
-              placeholderTextColor="#9CA3AF"
-            />
+        {/* Budget and Duration */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Budget & Time</Text>
+          <View style={styles.budgetRow}>
+            <View style={styles.budgetInput}>
+              <DollarSign color="#64748B" size={20} />
+              <TextInput
+                style={styles.budgetText}
+                value={budget}
+                onChangeText={setBudget}
+                placeholder="R500 - R800"
+                placeholderTextColor="#94A3B8"
+              />
+            </View>
+            <View style={styles.durationInput}>
+              <Clock color="#64748B" size={20} />
+              <TextInput
+                style={styles.durationText}
+                value={estimatedDuration}
+                onChangeText={setEstimatedDuration}
+                placeholder="4h"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numeric"
+              />
+            </View>
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Estimated Duration (hours) *</Text>
-          <TextInput
-            style={styles.input}
-            value={estimatedDuration}
-            onChangeText={setEstimatedDuration}
-            placeholder="e.g. 4"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Priority Level *</Text>
+        {/* Urgency */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>How urgent is this?</Text>
           <View style={styles.urgencyContainer}>
             {urgencyLevels.map((level) => (
               <TouchableOpacity
                 key={level.value}
                 style={[
-                  styles.urgencyChip,
-                  urgency === level.value && { backgroundColor: level.color }
+                  styles.urgencyCard,
+                  urgency === level.value && { 
+                    backgroundColor: level.color + '15',
+                    borderColor: level.color 
+                  }
                 ]}
                 onPress={() => setUrgency(level.value as any)}
               >
+                <Text style={styles.urgencyIcon}>{level.icon}</Text>
                 <Text style={[
-                  styles.urgencyText,
-                  urgency === level.value && styles.activeUrgencyText
+                  styles.urgencyLabel,
+                  urgency === level.value && { color: level.color }
                 ]}>
                   {level.label}
                 </Text>
+                <Text style={styles.urgencyDescription}>{level.description}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Photos *</Text>
-          <Text style={styles.helperText}>Add photos to help providers understand the job better (at least 1 required)</Text>
-          
-          <View style={styles.photoActions}>
-            <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
-              <Camera color="#2563EB" size={20} />
-              <Text style={styles.photoButtonText}>Take Photo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.photoButton} onPress={handlePickImage}>
-              <Plus color="#2563EB" size={20} />
-              <Text style={styles.photoButtonText}>Choose Photo</Text>
-            </TouchableOpacity>
+        {/* Info Box */}
+        <View style={styles.infoBox}>
+          <AlertCircle color="#2563EB" size={20} />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoTitle}>How it works</Text>
+            <Text style={styles.infoText}>
+              Once posted, verified providers will submit bids. You can review their profiles, ratings, and proposals before choosing the best fit for your job.
+            </Text>
           </View>
-
-          {images.length > 0 && (
-            <View style={styles.photoGrid}>
-              {images.map((image, index) => (
-                <View key={index} style={styles.photoContainer}>
-                  <Image source={{ uri: image }} style={styles.photoThumbnail} />
-                  <TouchableOpacity 
-                    style={styles.removePhotoButton}
-                    onPress={() => removeImage(index)}
-                  >
-                    <X color="#FFFFFF" size={16} />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          )}
         </View>
-      </View>
+      </ScrollView>
 
+      {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Post Job</Text>
+          <Text style={styles.submitButtonText}>Post Job & Get Bids</Text>
+          <Zap color="#FFFFFF" size={20} />
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
   },
   header: {
-    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  cancelButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#111827',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    marginTop: 4,
-  },
-  form: {
-    flex: 1,
-    padding: 24,
-  },
-  inputGroup: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 16,
+    fontSize: 20,
     fontFamily: 'Inter-SemiBold',
-    color: '#374151',
+    color: '#0F172A',
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  progressContainer: {
+    paddingVertical: 24,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 2,
     marginBottom: 8,
   },
-  helperText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    marginBottom: 12,
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#2563EB',
+    borderRadius: 2,
   },
-  input: {
+  progressText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#64748B',
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-SemiBold',
+    color: '#0F172A',
+    marginBottom: 8,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+    marginBottom: 16,
+  },
+  inputContainer: {
     backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderColor: '#E2E8F0',
+  },
+  titleInput: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#111827',
+    color: '#0F172A',
   },
   textArea: {
-    height: 100,
-    paddingTop: 12,
-  },
-  inputWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flex: 1,
-  },
-  inputWithIconText: {
-    flex: 1,
-    marginLeft: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#111827',
+    color: '#0F172A',
+    minHeight: 120,
+    textAlignVertical: 'top',
   },
-  locationContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  locationButton: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    justifyContent: 'center',
-  },
-  locationButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#2563EB',
-  },
-  categoryContainer: {
+  categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
   },
-  categoryChip: {
+  categoryCard: {
+    width: (width - 72) / 3,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  activeCategoryChip: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
-  },
-  categoryText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-  },
-  activeCategoryText: {
-    color: '#FFFFFF',
-  },
-  urgencyContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  urgencyChip: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    paddingVertical: 20,
     alignItems: 'center',
   },
-  urgencyText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
+  activeCategoryCard: {
+    backgroundColor: '#F8FAFC',
   },
-  activeUrgencyText: {
-    color: '#FFFFFF',
+  categoryIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  categoryLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#334155',
+  },
+  photoSection: {
+    marginTop: 16,
   },
   photoActions: {
     flexDirection: 'row',
@@ -455,29 +495,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
     borderStyle: 'dashed',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 16,
+    paddingVertical: 20,
   },
   photoButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
     color: '#2563EB',
     marginLeft: 8,
   },
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+  photoScroll: {
+    marginTop: 16,
   },
   photoContainer: {
     position: 'relative',
+    marginRight: 12,
   },
   photoThumbnail: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+    width: 100,
+    height: 100,
+    borderRadius: 12,
   },
   removePhotoButton: {
     position: 'absolute',
@@ -490,36 +529,157 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  footer: {
+  locationRow: {
     flexDirection: 'row',
+    gap: 12,
+  },
+  locationInput: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  locationText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#0F172A',
+  },
+  locationButton: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    justifyContent: 'center',
+  },
+  locationButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2563EB',
+  },
+  budgetRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  budgetInput: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  budgetText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#0F172A',
+  },
+  durationInput: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  durationText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#0F172A',
+  },
+  urgencyContainer: {
+    gap: 12,
+  },
+  urgencyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  urgencyIcon: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  urgencyLabel: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#334155',
+    marginRight: 12,
+  },
+  urgencyDescription: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#64748B',
+    flex: 1,
+  },
+  infoBox: {
+    flexDirection: 'row',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 32,
+  },
+  infoContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1E40AF',
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#1E40AF',
+    lineHeight: 20,
+  },
+  footer: {
     padding: 24,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#6B7280',
+    borderTopColor: '#E2E8F0',
   },
   submitButton: {
-    flex: 2,
+    flexDirection: 'row',
     backgroundColor: '#2563EB',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2563EB',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   submitButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
+    marginRight: 8,
   },
 });
