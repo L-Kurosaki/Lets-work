@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
-import { Clock, CheckCircle, XCircle, TrendingUp, DollarSign, Calendar } from 'lucide-react-native';
+import { Clock, CircleCheck as CheckCircle, Circle as XCircle, TrendingUp, DollarSign, Calendar } from 'lucide-react-native';
 import { Bid, Job } from '@/types';
 import { dataService } from '@/services/dataService';
 
