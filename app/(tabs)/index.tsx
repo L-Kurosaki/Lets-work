@@ -1,12 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Modal, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Clock, Plus, Filter, Zap, TrendingUp, Users } from 'lucide-react-native';
+import { Search, MapPin, Star, Clock, Plus, Filter, Zap, TrendingUp, Users, Navigation } from 'lucide-react-native';
 import { Job } from '@/types';
 import { dataService } from '@/services/dataService';
 import { LocationService } from '@/services/locationService';
 import JobPostForm from '@/components/JobPostForm';
 import BidsList from '@/components/BidsList';
+import SecurityMonitor from '@/components/SecurityMonitor';
 
 export default function JobsScreen() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -18,24 +19,43 @@ export default function JobsScreen() {
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
 
   const filters = ['All', 'Cleaning', 'Gardening', 'Painting', 'Handyman', 'Plumbing', 'Electrical'];
 
   useEffect(() => {
-    loadJobs();
-    getCurrentLocation();
+    initializeLocation();
   }, []);
 
-  const getCurrentLocation = async () => {
-    const location = await LocationService.getCurrentLocation();
-    setUserLocation(location);
+  const initializeLocation = async () => {
+    try {
+      // First try to get current location
+      const location = await LocationService.getCurrentLocation();
+      if (location) {
+        setUserLocation(location);
+        setLocationPermissionGranted(true);
+        await loadJobs(location);
+      } else {
+        // Try IP-based location as fallback
+        const ipLocation = await LocationService.getApproximateLocation();
+        if (ipLocation) {
+          setUserLocation(ipLocation);
+          await loadJobs(ipLocation);
+        } else {
+          // Load jobs without location filtering
+          await loadJobs();
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing location:', error);
+      await loadJobs(); // Load jobs without location
+    }
   };
 
-  const loadJobs = async () => {
+  const loadJobs = async (location?: {latitude: number, longitude: number}) => {
     try {
       setLoading(true);
-      const location = await LocationService.getCurrentLocation();
-      const fetchedJobs = await dataService.getJobs(location || undefined);
+      const fetchedJobs = await dataService.getJobs(location);
       setJobs(fetchedJobs);
     } catch (error) {
       console.error('Error loading jobs:', error);
@@ -47,15 +67,38 @@ export default function JobsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadJobs();
+    await loadJobs(userLocation || undefined);
     setRefreshing(false);
+  };
+
+  const requestLocationPermission = async () => {
+    try {
+      const hasPermission = await LocationService.requestPermissions();
+      if (hasPermission) {
+        const location = await LocationService.getCurrentLocation();
+        if (location) {
+          setUserLocation(location);
+          setLocationPermissionGranted(true);
+          await loadJobs(location);
+          Alert.alert('Location Enabled', 'Now showing jobs near your location!');
+        }
+      } else {
+        Alert.alert(
+          'Location Permission',
+          'Location access helps us show you jobs nearby. You can still browse all jobs without it.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error requesting location permission:', error);
+    }
   };
 
   const handleCreateJob = async (jobData: any) => {
     try {
       await dataService.createJob(jobData);
       setShowJobForm(false);
-      loadJobs();
+      await loadJobs(userLocation || undefined);
       Alert.alert('Success', 'Your job has been posted successfully!');
     } catch (error) {
       console.error('Error creating job:', error);
@@ -72,7 +115,7 @@ export default function JobsScreen() {
     try {
       await dataService.acceptBid(bidId);
       setShowBids(false);
-      loadJobs();
+      await loadJobs(userLocation || undefined);
       Alert.alert('Success', 'Bid accepted! The provider has been notified.');
     } catch (error) {
       console.error('Error accepting bid:', error);
@@ -145,6 +188,9 @@ export default function JobsScreen() {
           <View style={styles.locationContainer}>
             <MapPin color="#6B7280" size={14} />
             <Text style={styles.locationText}>{job.location}</Text>
+            {job.distance && (
+              <Text style={styles.distanceText}> • {job.distance}</Text>
+            )}
           </View>
           
           <View style={styles.timeContainer}>
@@ -176,12 +222,24 @@ export default function JobsScreen() {
             <Text style={styles.headerTitle}>Find Your Next</Text>
             <Text style={styles.headerTitleAccent}>Piece Job</Text>
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
-            <View style={styles.notificationDot} />
-            <TrendingUp color="#2563EB" size={24} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            {!locationPermissionGranted && (
+              <TouchableOpacity style={styles.locationButton} onPress={requestLocationPermission}>
+                <Navigation color="#2563EB" size={20} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.notificationButton}>
+              <View style={styles.notificationDot} />
+              <TrendingUp color="#2563EB" size={24} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <Text style={styles.headerSubtitle}>Trusted local services at your fingertips</Text>
+        <Text style={styles.headerSubtitle}>
+          {userLocation 
+            ? 'Trusted local services near you' 
+            : 'Trusted local services • Enable location for nearby jobs'
+          }
+        </Text>
       </View>
 
       {/* Enhanced Search */}
@@ -230,6 +288,16 @@ export default function JobsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
+        {/* Security Monitor for in-progress jobs */}
+        {filteredJobs.some(job => job.status === 'in-progress') && (
+          <SecurityMonitor 
+            job={filteredJobs.find(job => job.status === 'in-progress')!}
+            onEmergencyAlert={() => {
+              Alert.alert('Emergency Alert', 'Security team has been notified.');
+            }}
+          />
+        )}
+
         {loading ? (
           <View style={styles.loadingContainer}>
             <View style={styles.loadingSpinner} />
@@ -244,7 +312,9 @@ export default function JobsScreen() {
             <Text style={styles.emptyDescription}>
               {searchQuery || activeFilter !== 'All' 
                 ? 'Try adjusting your search or filters'
-                : 'Be the first to post a job in your area!'
+                : userLocation 
+                  ? 'Be the first to post a job in your area!'
+                  : 'Enable location to see jobs near you, or post the first job!'
               }
             </Text>
             <TouchableOpacity style={styles.emptyAction} onPress={() => setShowJobForm(true)}>
@@ -338,6 +408,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#64748B',
     marginTop: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  locationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   notificationButton: {
     position: 'relative',
@@ -565,6 +648,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: '#64748B',
     marginLeft: 6,
+  },
+  distanceText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Medium',
+    color: '#2563EB',
   },
   timeContainer: {
     flexDirection: 'row',

@@ -16,12 +16,12 @@ class DataService {
   }
 
   private initializeMockData() {
-    // Initialize with existing mock data
+    // Initialize with more diverse mock data across different locations
     this.jobs = [
       {
         id: '1',
         title: 'Deep Clean 3-Bedroom House',
-        description: 'Need a thorough cleaning of my 3-bedroom house in Sandton. Kitchen, bathrooms, and all living areas.',
+        description: 'Need a thorough cleaning of my 3-bedroom house in Sandton. Kitchen, bathrooms, and all living areas. Looking for someone with experience in deep cleaning and attention to detail.',
         location: 'Sandton, Johannesburg',
         coordinates: { latitude: -26.1076, longitude: 28.0567 },
         budget: 'R800 - R1200',
@@ -37,7 +37,7 @@ class DataService {
       {
         id: '2',
         title: 'Garden Maintenance & Lawn Care',
-        description: 'Weekly garden maintenance needed. Trimming hedges, lawn mowing, and general garden cleanup.',
+        description: 'Weekly garden maintenance needed. Trimming hedges, lawn mowing, and general garden cleanup. Must have own equipment.',
         location: 'Rosebank, Johannesburg',
         coordinates: { latitude: -26.1448, longitude: 28.0436 },
         budget: 'R400 - R600',
@@ -49,6 +49,70 @@ class DataService {
         status: 'posted',
         customerId: 'customer1',
         estimatedDuration: 3
+      },
+      {
+        id: '3',
+        title: 'Interior Wall Painting',
+        description: 'Need to paint the interior walls of my 2-bedroom apartment. All materials will be provided. Looking for experienced painter.',
+        location: 'Melville, Johannesburg',
+        coordinates: { latitude: -26.1875, longitude: 28.0103 },
+        budget: 'R1500 - R2500',
+        timePosted: '1 day ago',
+        bids: [],
+        category: 'Painting',
+        images: ['https://images.pexels.com/photos/1669799/pexels-photo-1669799.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        urgency: 'medium',
+        status: 'posted',
+        customerId: 'customer2',
+        estimatedDuration: 6
+      },
+      {
+        id: '4',
+        title: 'Bathroom Plumbing Repair',
+        description: 'Leaking tap and blocked drain in main bathroom. Need urgent repair. Must be licensed plumber.',
+        location: 'Fourways, Johannesburg',
+        coordinates: { latitude: -25.9269, longitude: 28.0094 },
+        budget: 'R500 - R800',
+        timePosted: '3 hours ago',
+        bids: [],
+        category: 'Plumbing',
+        images: ['https://images.pexels.com/photos/8486944/pexels-photo-8486944.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        urgency: 'high',
+        status: 'posted',
+        customerId: 'customer3',
+        estimatedDuration: 2
+      },
+      {
+        id: '5',
+        title: 'Electrical Socket Installation',
+        description: 'Need 3 new electrical sockets installed in home office. Must be qualified electrician with COC.',
+        location: 'Randburg, Johannesburg',
+        coordinates: { latitude: -26.0939, longitude: 27.9621 },
+        budget: 'R800 - R1200',
+        timePosted: '6 hours ago',
+        bids: [],
+        category: 'Electrical',
+        images: ['https://images.pexels.com/photos/257736/pexels-photo-257736.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        urgency: 'medium',
+        status: 'posted',
+        customerId: 'customer4',
+        estimatedDuration: 3
+      },
+      {
+        id: '6',
+        title: 'Moving Assistance',
+        description: 'Need help moving from 2-bedroom apartment to new house. Heavy furniture included. Need 2-3 people.',
+        location: 'Bryanston, Johannesburg',
+        coordinates: { latitude: -26.0469, longitude: 28.0187 },
+        budget: 'R1000 - R1500',
+        timePosted: '5 hours ago',
+        bids: [],
+        category: 'Moving',
+        images: ['https://images.pexels.com/photos/7464230/pexels-photo-7464230.jpeg?auto=compress&cs=tinysrgb&w=400'],
+        urgency: 'high',
+        status: 'posted',
+        customerId: 'customer5',
+        estimatedDuration: 5
       }
     ];
 
@@ -86,27 +150,68 @@ class DataService {
         description: 'Experienced gardener with expertise in lawn care, hedge trimming, and landscape maintenance.',
         qualifications: [],
         isOnline: true
+      },
+      {
+        id: 'provider3',
+        name: 'Maria Santos',
+        avatar: 'https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=400',
+        rating: 4.7,
+        reviewCount: 203,
+        specialty: 'Interior Painting',
+        location: 'Melville',
+        coordinates: { latitude: -26.1875, longitude: 28.0103 },
+        hourlyRate: 'R200/hour',
+        completedJobs: 312,
+        isVerified: true,
+        badges: ['Master Painter', 'Quality Guarantee'],
+        description: 'Professional painter with 12+ years experience. Specializing in interior and exterior painting.',
+        qualifications: [],
+        isOnline: true
+      },
+      {
+        id: 'provider4',
+        name: 'John Williams',
+        avatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400',
+        rating: 4.9,
+        reviewCount: 156,
+        specialty: 'Plumbing',
+        location: 'Fourways',
+        coordinates: { latitude: -25.9269, longitude: 28.0094 },
+        hourlyRate: 'R250/hour',
+        completedJobs: 189,
+        isVerified: true,
+        badges: ['Licensed Plumber', 'Emergency Service'],
+        description: 'Licensed plumber with 15+ years experience. Available for emergency repairs and installations.',
+        qualifications: [],
+        isOnline: true
       }
     ];
   }
 
-  // Job methods
-  async getJobs(userLocation?: LocationCoords, radiusKm: number = 10): Promise<Job[]> {
+  // Job methods with improved location filtering
+  async getJobs(userLocation?: LocationCoords, radiusKm: number = 25): Promise<Job[]> {
     let filteredJobs = [...this.jobs];
 
     if (userLocation) {
+      // Filter jobs within radius
       filteredJobs = filteredJobs.filter(job => {
-        if (!job.coordinates) return true;
-        return LocationService.isWithinRadius(userLocation, job.coordinates, radiusKm);
+        if (!job.coordinates) return true; // Include jobs without coordinates
+        const distance = LocationService.calculateDistance(userLocation, job.coordinates);
+        return distance <= radiusKm;
       });
 
-      // Add distance to jobs
+      // Add distance to jobs and sort by distance
       filteredJobs = filteredJobs.map(job => ({
         ...job,
         distance: job.coordinates 
           ? LocationService.formatDistance(LocationService.calculateDistance(userLocation, job.coordinates))
           : undefined
-      }));
+      })).sort((a, b) => {
+        if (!a.coordinates || !b.coordinates) return 0;
+        const distanceA = LocationService.calculateDistance(userLocation, a.coordinates);
+        const distanceB = LocationService.calculateDistance(userLocation, b.coordinates);
+        return distanceA - distanceB;
+      });
     }
 
     return filteredJobs;
@@ -187,23 +292,30 @@ class DataService {
     }
   }
 
-  // Provider methods
-  async getProviders(userLocation?: LocationCoords, radiusKm: number = 10): Promise<Provider[]> {
+  // Provider methods with improved location filtering
+  async getProviders(userLocation?: LocationCoords, radiusKm: number = 25): Promise<Provider[]> {
     let filteredProviders = [...this.providers];
 
     if (userLocation) {
+      // Filter providers within radius
       filteredProviders = filteredProviders.filter(provider => {
-        if (!provider.coordinates) return true;
-        return LocationService.isWithinRadius(userLocation, provider.coordinates, radiusKm);
+        if (!provider.coordinates) return true; // Include providers without coordinates
+        const distance = LocationService.calculateDistance(userLocation, provider.coordinates);
+        return distance <= radiusKm;
       });
 
-      // Add distance to providers
+      // Add distance to providers and sort by distance
       filteredProviders = filteredProviders.map(provider => ({
         ...provider,
         distance: provider.coordinates 
           ? LocationService.formatDistance(LocationService.calculateDistance(userLocation, provider.coordinates))
           : undefined
-      }));
+      })).sort((a, b) => {
+        if (!a.coordinates || !b.coordinates) return 0;
+        const distanceA = LocationService.calculateDistance(userLocation, a.coordinates);
+        const distanceB = LocationService.calculateDistance(userLocation, b.coordinates);
+        return distanceA - distanceB;
+      });
     }
 
     return filteredProviders;
@@ -252,6 +364,54 @@ class DataService {
     if (notificationIndex !== -1) {
       this.notifications[notificationIndex].read = true;
     }
+  }
+
+  // Security monitoring methods
+  async startJobMonitoring(jobId: string): Promise<void> {
+    const job = await this.getJobById(jobId);
+    if (job) {
+      await this.updateJobStatus(jobId, 'in-progress');
+      
+      // Schedule 4-hour emergency check
+      setTimeout(async () => {
+        const updatedJob = await this.getJobById(jobId);
+        if (updatedJob && updatedJob.status === 'in-progress') {
+          await this.triggerEmergencyCheck(jobId);
+        }
+      }, 4 * 60 * 60 * 1000); // 4 hours in milliseconds
+    }
+  }
+
+  async triggerEmergencyCheck(jobId: string): Promise<void> {
+    const job = await this.getJobById(jobId);
+    if (!job) return;
+
+    // Create emergency notification
+    await this.createNotification({
+      userId: job.customerId,
+      type: 'security_alert',
+      title: 'Emergency Check Required',
+      message: `Job "${job.title}" has been running for 4+ hours. Please confirm safety status.`,
+      data: { jobId, type: 'emergency_check' }
+    });
+
+    // In a real app, this would trigger:
+    // 1. SMS to customer's emergency contact
+    // 2. Call to security partner
+    // 3. GPS location check
+    // 4. Provider welfare check
+    
+    console.log(`Emergency check triggered for job ${jobId}`);
+  }
+
+  async confirmSafety(jobId: string, userId: string): Promise<void> {
+    await this.createNotification({
+      userId,
+      type: 'security_alert',
+      title: 'Safety Confirmed',
+      message: 'Thank you for confirming your safety. Monitoring continues.',
+      data: { jobId, type: 'safety_confirmed' }
+    });
   }
 }
 

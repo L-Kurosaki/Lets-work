@@ -7,22 +7,43 @@ export interface LocationCoords {
 }
 
 export class LocationService {
-  static async requestPermissions(): Promise<boolean> {
-    if (Platform.OS === 'web') {
-      return new Promise((resolve) => {
-        if ('geolocation' in navigator) {
-          navigator.geolocation.getCurrentPosition(
-            () => resolve(true),
-            () => resolve(false)
-          );
-        } else {
-          resolve(false);
-        }
-      });
-    }
+  private static lastKnownLocation: LocationCoords | null = null;
+  private static locationWatchId: Location.LocationSubscription | null = null;
 
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    return status === 'granted';
+  static async requestPermissions(): Promise<boolean> {
+    try {
+      if (Platform.OS === 'web') {
+        return new Promise((resolve) => {
+          if ('geolocation' in navigator) {
+            navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+              if (result.state === 'granted') {
+                resolve(true);
+              } else {
+                navigator.geolocation.getCurrentPosition(
+                  () => resolve(true),
+                  () => resolve(false),
+                  { timeout: 10000 }
+                );
+              }
+            }).catch(() => {
+              navigator.geolocation.getCurrentPosition(
+                () => resolve(true),
+                () => resolve(false),
+                { timeout: 10000 }
+              );
+            });
+          } else {
+            resolve(false);
+          }
+        });
+      }
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      return status === 'granted';
+    } catch (error) {
+      console.error('Error requesting location permissions:', error);
+      return false;
+    }
   }
 
   static async getCurrentLocation(): Promise<LocationCoords | null> {
@@ -32,33 +53,104 @@ export class LocationService {
           if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
               (position) => {
-                resolve({
+                const coords = {
                   latitude: position.coords.latitude,
                   longitude: position.coords.longitude,
-                });
+                };
+                this.lastKnownLocation = coords;
+                resolve(coords);
               },
-              () => resolve(null)
+              (error) => {
+                console.error('Web geolocation error:', error);
+                // Return last known location or default to Johannesburg
+                resolve(this.lastKnownLocation || { latitude: -26.2041, longitude: 28.0473 });
+              },
+              { 
+                enableHighAccuracy: true, 
+                timeout: 15000, 
+                maximumAge: 300000 // 5 minutes
+              }
             );
           } else {
-            resolve(null);
+            // Fallback to Johannesburg coordinates
+            resolve({ latitude: -26.2041, longitude: 28.0473 });
           }
         });
       }
 
       const hasPermission = await this.requestPermissions();
-      if (!hasPermission) return null;
+      if (!hasPermission) {
+        // Return last known location or default
+        return this.lastKnownLocation || { latitude: -26.2041, longitude: 28.0473 };
+      }
 
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
+        timeout: 15000,
       });
 
-      return {
+      const coords = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       };
+
+      this.lastKnownLocation = coords;
+      return coords;
     } catch (error) {
       console.error('Error getting location:', error);
-      return null;
+      // Return last known location or default to Johannesburg
+      return this.lastKnownLocation || { latitude: -26.2041, longitude: 28.0473 };
+    }
+  }
+
+  static async startLocationTracking(callback: (location: LocationCoords) => void): Promise<void> {
+    try {
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) return;
+
+      if (Platform.OS === 'web') {
+        if ('geolocation' in navigator) {
+          const watchId = navigator.geolocation.watchPosition(
+            (position) => {
+              const coords = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              };
+              this.lastKnownLocation = coords;
+              callback(coords);
+            },
+            (error) => console.error('Location tracking error:', error),
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+          );
+          // Store watchId for cleanup (web doesn't have the same subscription object)
+        }
+        return;
+      }
+
+      this.locationWatchId = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 30000, // Update every 30 seconds
+          distanceInterval: 100, // Update every 100 meters
+        },
+        (location) => {
+          const coords = {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          };
+          this.lastKnownLocation = coords;
+          callback(coords);
+        }
+      );
+    } catch (error) {
+      console.error('Error starting location tracking:', error);
+    }
+  }
+
+  static stopLocationTracking(): void {
+    if (this.locationWatchId) {
+      this.locationWatchId.remove();
+      this.locationWatchId = null;
     }
   }
 
@@ -99,5 +191,32 @@ export class LocationService {
   ): boolean {
     const distance = this.calculateDistance(center, point);
     return distance <= radiusKm;
+  }
+
+  static getLastKnownLocation(): LocationCoords | null {
+    return this.lastKnownLocation;
+  }
+
+  // Get approximate location based on IP (fallback for web)
+  static async getApproximateLocation(): Promise<LocationCoords | null> {
+    if (Platform.OS !== 'web') return null;
+
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+      
+      if (data.latitude && data.longitude) {
+        const coords = {
+          latitude: parseFloat(data.latitude),
+          longitude: parseFloat(data.longitude),
+        };
+        this.lastKnownLocation = coords;
+        return coords;
+      }
+    } catch (error) {
+      console.error('Error getting IP-based location:', error);
+    }
+
+    return null;
   }
 }
